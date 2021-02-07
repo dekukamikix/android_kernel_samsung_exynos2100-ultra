@@ -61,8 +61,8 @@
  * unthrottling the TTY driver.  These watermarks are used for
  * controlling the space in the read buffer.
  */
-#define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
-#define TTY_THRESHOLD_UNTHROTTLE	128
+#define TTY_THRESHOLD_THROTTLE		512 /* now based on remaining room */
+#define TTY_THRESHOLD_UNTHROTTLE	512
 
 /*
  * Special byte codes used in the echo buffer to represent operations

@@ -1743,6 +1743,9 @@ out_put_budget:
 static enum blk_eh_timer_return scsi_timeout(struct request *req,
 		bool reserved)
 {
+#ifdef CONFIG_USB_HOST_SAMSUNG_FEATURE
+	pr_info("%s reserved=%d\n", __func__, reserved);
+#endif
 	if (reserved)
 		return BLK_EH_RESET_TIMER;
 	return scsi_times_out(req);
@@ -2121,6 +2124,8 @@ scsi_mode_sense(struct scsi_device *sdev, int dbd, int modepage,
 
 	memset(data, 0, sizeof(*data));
 	memset(&cmd[0], 0, 12);
+
+	dbd = sdev->set_dbd_for_ms ? 8 : dbd;
 	cmd[1] = dbd & 0x18;	/* allows DBD and LLBA bits */
 	cmd[2] = modepage;
 

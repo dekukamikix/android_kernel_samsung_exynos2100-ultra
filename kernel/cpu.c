@@ -32,6 +32,7 @@
 #include <linux/relay.h>
 #include <linux/slab.h>
 #include <linux/percpu-rwsem.h>
+#include <linux/sec_debug.h>
 
 #include <trace/events/power.h>
 #define CREATE_TRACE_POINTS
@@ -242,7 +243,9 @@ static bool cpuhp_is_ap_state(enum cpuhp_state state)
 static inline void wait_for_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
 {
 	struct completion *done = bringup ? &st->done_up : &st->done_down;
+	secdbg_dtsk_built_set_data(DTYPE_CPUHP, (void *)st->thread);
 	wait_for_completion(done);
+	secdbg_dtsk_built_clear_data();
 }
 
 static inline void complete_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
@@ -1297,6 +1300,7 @@ void __weak arch_enable_nonboot_cpus_end(void)
 void enable_nonboot_cpus(void)
 {
 	int cpu, error;
+	struct device *cpu_device;
 
 	/* Allow everyone to use the CPU hotplug again */
 	cpu_maps_update_begin();
@@ -1314,6 +1318,12 @@ void enable_nonboot_cpus(void)
 		trace_suspend_resume(TPS("CPU_ON"), cpu, false);
 		if (!error) {
 			pr_info("CPU%d is up\n", cpu);
+			cpu_device = get_cpu_device(cpu);
+			if (!cpu_device)
+				pr_err("%s: failed to get cpu%d device\n",
+				       __func__, cpu);
+			else
+				kobject_uevent(&cpu_device->kobj, KOBJ_ONLINE);
 			continue;
 		}
 		pr_warn("Error taking CPU%d up: %d\n", cpu, error);
